@@ -1,10 +1,13 @@
 import argparse
 import pandas as pd
 
-full_match_message = 'Load your template here: [name] [match_speak] [match_learn] [match_name] [match_email]'
-partial_match_with_advanced_message = 'Load your template here [name] [match_speak] [match_learn] [match_name] [match_email]'
-partial_match_with_native_message = 'Load your template here [name] [match_speak] [match_learn] [match_name] [match_email]'
-no_match_message = 'Load your template here [name]'
+
+# The templates should contain  [name] [match_speak] [match_learn] [match_name] [match_email]
+full_match_message = open('./templates/full_match_message.txt', 'r').read().replace('\n', ' ')
+partial_match_with_advanced_message = open('./templates/partial_match_with_advanced_message.txt', 'r').read().replace('\n', ' ')
+partial_match_with_native_message = open('./templates/partial_match_with_native_message.txt', 'r').read().replace('\n', ' ')
+no_match_message = open('./templates/no_match_message.txt', 'r').read().replace('\n', ' ')
+
 
 def count_possible_matches(responses):
     """ Counting possible matches (needed for sorting)... """
@@ -45,7 +48,7 @@ def _partial_match(person_info, match_info):
 
 
 def create_matches(responses, possible_matches_dict):
-    """ Return dictionary with the information about match and save the match_type. """"
+    """ Return dictionary with the information about match and save the match_type. """
     done = []
     matches = {}
     for name in sorted(possible_matches_dict, key=possible_matches_dict.get, reverse=False):
@@ -67,6 +70,8 @@ def create_matches(responses, possible_matches_dict):
                         break
                     elif _partial_match(match_info, person_info)[0]:
                         matches = _save_match(matches, person_info, match_info, _partial_match(match_info, person_info), match_type='partial_match', prefix=True)
+                        done.append(name)
+                        done.append(row_matches['name'])
     print(matches)
     return matches
 
@@ -107,7 +112,7 @@ def write_email(row_person, responses, matches):
         elif matches[row_person['name']]['match_type'] == 'partial_match_with_native':
             message = _fill_email(partial_match_with_native_message, row_person['name'], matches[row_person['name']])
     else:
-        message = no_match_message.replace('[name]', row_person['name']).replace('#', '\n')
+        message = no_match_message.replace('[name]', row_person['name'])
 
     return message
 
@@ -124,15 +129,14 @@ def _fill_email(email_template, name, matches):
     message = message.replace('[match_email]', match_email)
     message = message.replace('[match_speak]', match_speak)
     message = message.replace('[match_learn]', match_learn)
-    message = message.replace('#', '\n')
 
     return message
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create language exchange partners matches.')
-    parser.add_argument('--input_file', type=str, default='./responses/test_responses_2019.csv', help='Input file with the responses')
-    parser.add_argument('--output_file', type=str, default='./results/test_matches_2019.csv', help='Output file with the matches')
+    parser.add_argument('--input_file', type=str, default='./responses/responses_2019.csv', help='Input file with the responses')
+    parser.add_argument('--output_file', type=str, default='./results/matches_2019.v1.csv', help='Output file with the matches')
     args = parser.parse_args()
 
     # Read responses into a DafaFrame
